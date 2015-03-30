@@ -1,0 +1,69 @@
+{% extends "competitors/base.html" %}
+{% block main %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/team.css">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<div id = "title">
+		<h1>COMPETITORS</h1>
+	</div>
+
+	{% block tp %}
+	{% endblock%}
+
+	<div id="tabs">
+	  	<ul>
+		    <li><a href="#news">News</a></li>
+		    <li><a href="#data">Data</a></li>
+		    <li><a href="#schedule">Schedule</a></li>
+		    <li><a href="#forum">Forum</a></li>
+	  	</ul>
+	  	<div id="news">
+	  		<div id>
+	  			{% for item in news %}
+	  				<a href="{% url 'get_news' item.id %}">{{item.title}}</a>
+	  			{% endfor %}
+	    	</div>
+	  	</div>
+	  	<div id="data">
+	  		<div id="basic_info">
+	    
+			</div>
+			<div id="player_list">
+			</div>
+			<div id="records">
+			</div>
+	  	</div>
+	  	<div id="schedule">
+	  		{% for match in matches %}
+	  			{{match.home}} vs {{match.away}}
+	  			{{match.time}}
+	  			<a href="{% url 'live_page' match.id %}">Watch LIVE</button>
+	  		{% endfor %}
+	  	</div>
+	  	<div id="forum">
+			{% for post in posts %}
+				<a href="{% url 'get_post' post.id %}" target="_blank">{{post.title}}</a>
+			{% endfor %}
+			<form method="POST" action="{% url 'add_post' %}">
+				<input type="hidden" name="redirecturl" value="{% firstof request.path '/' %}">
+				{% if team %}
+					<input type="hidden" name="cat" value="team">
+					<input type="hidden" name="id" value="{{ team.id }}">
+				{% endif %}
+				{% if player %}
+					<input type="hidden" name="cat" value="player">
+					<input type="hidden" name="id" value="{{player.id}}">
+				{% endif %}
+				{{form}}
+				{% csrf_token %}
+				<button type="submit">POST</button>
+			</form>
+	  	</div>
+	</div>
+	
+	<script>
+		$( "#tabs" ).tabs();
+	</script>
+	<script type="text/javascript" src="{{STATIC_URL}}competitors/js/team.js"></script>
+	{% endblock %}

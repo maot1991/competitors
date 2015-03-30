@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}socialnetwork/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}socialnetwork/css/login.css">
+    <title>Login</title>
+
+</head>
+
+<body>
+    
+    <h1>
+        Welcome Back
+    </h1>
+    {% if form.errors %}
+        <h4>
+            Incorrect username or password.
+        </h4>
+    {% endif %}
+
+    <div id="loginform">
+        <form method="post" action="{% url 'django.contrib.auth.views.login' %}">
+            <table>
+                <tr>
+                    <td><input type="text" name="username" placeholder="username" required></td>
+                </tr>
+                <tr>
+                    <td><input type="password" name="password" placeholder="password" required></td>
+                </tr>
+                <!-- <tr>
+                    <td><input type="Email" name="email" placeholder="joe.smith@foo.com" required></td>
+                </tr> -->
+            </table>
+
+            <button class="btn btn-default" type="submit" value="Login">Login</button>
+            <input class="btn btn-default"type="hidden" name="next" value="{{ next }}" />
+            {% csrf_token %}
+        </form>
+        <form method="get" action="/register">
+            <button id ="registerbutton" class="btn btn-default">Register</button>
+        </form>
+    </div>
+    
+
+</body>
+</html>
+

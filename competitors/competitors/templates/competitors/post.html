@@ -1,0 +1,34 @@
+{% extends "competitors/base.html" %}
+{% block main %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/team.css">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+	<div id = "title">
+		<h1>COMPETITORS</h1>
+	</div>
+	<div>
+		{{post.title}}
+		{{post.content}}
+	</div>
+	<div>
+		{% for comment in comments %}
+			<div>
+				{{comment.content}} {{comment.time}}
+			</div>
+		{% endfor %}
+		<form method="POST" action="{% url 'add_comment' post.id %}">
+			{{form}}
+			<input type="hidden" name="redirecturl" value="{% firstof request.path '/' %}">
+			{% csrf_token %}
+			<button type="submit">POST</button>
+		</form>
+
+	</div>
+	<script>
+	$( "#tabs" ).tabs();
+	</script>
+
+	
+<script type="text/javascript" src="{{STATIC_URL}}competitors/js/team.js"></script>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "competitors/tpbase.html" %}
+{% block tp %}
+
+{% if team %}
+	<img id="icon_img" src="{{team.icon_url}}">
+	<h4>{{ team.name }}</h4>
+{% endif %}
+
+{% endblock %}

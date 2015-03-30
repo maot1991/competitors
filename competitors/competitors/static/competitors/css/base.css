@@ -1,0 +1,23 @@
+body>div{
+	width: 100%;
+}
+#toolbar{
+	width: 100%;
+	/*background: red;*/
+	padding-right: 50px;
+	text-align: right;
+}
+#toolbar>*{
+	display: inline;
+	/*width: 100%;
+	background: red;
+	padding-right: 50px;
+	text-align: right;*/
+}
+
+#footer{
+	width: 100%;
+	position: fixed;
+	bottom: 0;
+	text-align: center;
+}

@@ -1,0 +1,23 @@
+#panel>div{
+	display: none;
+
+}
+#icon_img{
+	width: 180px;
+	height: 240px;
+
+}
+/*.ui-tabs-nav>*{
+	width: 32%;
+}*/
+
+/*.ul-tabs-nav li{
+	padding: 0;
+}
+
+.ui-tabs-nav a{
+	padding-left: 0;
+
+	text-align: center;
+		
+}*/
