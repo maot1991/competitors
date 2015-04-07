@@ -1,0 +1,67 @@
+body{
+	min-width: 1024px;
+}
+#main{
+	width: 1024px;
+	margin: 10px auto 50px;
+}
+
+#tabs{
+	margin-top:20px; 
+	background: rgba(160,160,160,0.5);
+	min-height: 500px;
+	padding: 0;
+}
+
+#tabs>ul{
+	padding: 0;
+}
+
+#tabs>ul>li{
+	margin: 0;
+	width: 25%;
+}
+
+#tabs>ul>li>a{
+	margin: 0;
+	width: 100%;
+	text-align: center;
+}
+
+#tabs form label{
+	display: none;
+}
+#tabs form input,#tabs form textarea{
+	width: 100%;
+	margin: 5px auto;
+}
+
+#tabs form button{
+	width: 100%;
+	display: block;
+}
+
+.panel{
+	height: 100px;
+	text-align: center;
+	margin-bottom: 1px;
+	margin-left: -20px;
+	margin-right: -20px;
+}
+
+.panel:first-child{
+	margin-top:-16px;
+}
+
+.panel>div{
+	width: 300px;
+	display: inline-block;
+	text-align: center;
+	margin: 10px 5px;
+	vertical-align: middle;
+}
+
+#match_img{
+	width: 50px;
+	height: 50px;
+}

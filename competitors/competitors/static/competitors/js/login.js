@@ -1,3 +1,13 @@
+function cancelSign(){
+
+    G("sign_div").style.display = 'none';
+
+    G("cover_div").style.display = 'none';
+
+   document.body.style.overflow = '';
+
+};
+
 function G(id){
     return document.getElementById(id);
 };
@@ -14,7 +24,7 @@ function isIE(){
       return (document.all && window.ActiveXObject && !window.opera) ? true : false;
 }
 
-var loginDivWidth = 300; 
+var loginDivWidth = 402; 
 
 var token = $("[name='csrfmiddlewaretoken']").val();
 
@@ -24,115 +34,42 @@ var next = $("[name='redirect']").val();
 
 console.log(next);
 
-var sign_in_flow = '<div style="background:#FF9900;">Login</div><div>username:*</div><div>'
+var sign_in_flow = '<div id="login_window">'
+      +'<div id="login_header">'
+      +'<h3>Login</h3>'
+      +'<a href="#" id="login_cancel" onclick="cancelSign();"><span class="glyphicon glyphicon-remove"></span></a>'
+      +'</div><form method="post" action="">'
+      +'<div>'
+      +'<label class="sr-only">username:*</label>'
 
-       + '<input type="text"  name="username" />'
+       + '<input type="text"  name="username" placeholder="Username"/>'
 
-       + '</div><div>password:*</div><div><input type="password" name="password"/>'
+       + '</div>'
+       +'<div>'
+        +'<label class="sr-only">password:*</label>'
+        +'<input type="password" name="password" placeholder="Password"/>'
 
-        + '</div><div><input type="button" value="login" onclick="login();" id="sign_button"/>   '
+        + '</div>'
+        +'<div id="login_window_buttons">'
+        +'<div>'
+        +'<button id="signin" value="login" class="btn btn-success" onclick="login();" >Sign In</button>   '
+        + '<a href="/register"><input id="signup" type="button" class="btn btn-primary" value="Sign Up"/</a>  '
 
-        + '<input type="button" value="cancel" onclick="cancelSign();"/></div>'
+        + '</div><div>'
+
+        + '<a href="/change_password"><input type="button" id="forget" class="btn btn-danger" value="Forget Username/Password"/></a></div>'
 
         + '<input type="hidden" name="csrfmiddlewaretoken" value="'+token+'">'
 
         + '<input type="hidden" name="next" value="'+next+'">'
+        + '</div>';
 
-        + '<p><a href="/register">Sign Up</a>   '
+        
 
-        + 'or   <a href="/change_password">forget password</a></p>';
+        
 
-function loadSignInFlow(){
 
-   G("sign_div").innerHTML = sign_in_flow;
 
-    G("sign_email").focus();
-
-};
-
-var sign_up_flow = '<div style="background:#CCFF00;">Create New Account</div><div>e-mail:*</div><div>'
-
-       + '<input type="text" id="sign_email" maxlength="64" size="30"/>'
-
-       + '</div><div>password:*</div><div><input type="password" id="sign_pwd" size="30"/>'
-
-        + '</div><div>password again:*</div><div><input type="password" id="sign_repwd" size="30"/>'
-
-        + '</div><div><input type="button" value="creat account" onclick="signFlow(0);" id="sign_button"/> '
-
-        + ' <input type="button" value="cancel" onclick="cancelSign();"/></div>'
-
-        + '<p><a href="javascript:loadSignInFlow();">login</a></p>';
-
-function loadSignUpFlow(){
-
-   G("sign_div").innerHTML = sign_up_flow;
-
-    G("sign_email").focus();
-
-};
-
-function cancelSign(){
-
-    G("sign_div").style.display = 'none';
-
-    G("cover_div").style.display = 'none';
-
-   document.body.style.overflow = '';
-
-};
-
-var forget_pwd_flow = '<div style="background:#FF99FF;">Forget Password</div><div>e-mail:*</div><div>'
-
-       + '<input type="text" id="sign_email" maxlength="64" size="30"/>'
-
-        + '</div><div><input type="button" value="sent pwd to e_mail" onclick="signFlow(2);" id="sign_button"/>   '
-
-        + '   <input type="button" value="cancel" onclick="cancelSign();"/></div>';
-
-function loadForgetPwdFlow(){
-
-   G("sign_div").innerHTML = forget_pwd_flow;
-
-    G("sign_email").focus();
-
-};
-
-function checkEmail(){
-
-   if((G("sign_email").value.indexOf('@')<=0)||(G("sign_email").value.indexOf('.')<=0)){
-
-    return '<div style="color:#FF0000";">Sorry, unrecognized e_mail.</div>';
-
-   }
-
-   return '';
-
-}
-
-function checkPwd(){
-
-   if(G("sign_pwd").value.trim() == ''){
-
-    return '<div style="color:#FF0000";">Password field is required.</div>';
-
-   }
-
-   return '';
-
-}
-
-function checkRePwd(){
-
-   if(G("sign_pwd").value.trim() != G("sign_repwd").value.trim()){
-
-    return '<div style="color:#FF0000";">The specified passwords do not match.</div>';
-
-   }
-
-   return '';
-
-}
 
 function signFlow(isSignIn){
 
@@ -212,9 +149,9 @@ function popCoverDiv(){
 
      var bodySize = getBodySize();
 
-     width = bodySize[0] + 'px'
+     width = '100%'
 
-     height = bodySize[1] + 'px';
+     height = '100%'
 
      zIndex = 98;
 
@@ -260,7 +197,7 @@ function popSign(isLogin){
 
     var signDiv = GC('form');
 
-    document.body.appendChild(signDiv);
+    $("#navbar").append(signDiv);
 
     signDiv.id = 'sign_div';
 
@@ -290,11 +227,9 @@ function popSign(isLogin){
 
     with (signDiv.style) {
 
-     position = 'absolute';
+     margin = '100px auto'
 
-     left = (document.documentElement.clientWidth - loginDivWidth)/2 + 'px';
-
-     top = (document.documentElement.clientHeight - 300)/2 + 'px';
+     position = 'relative';
 
      width = loginDivWidth + 'px';
 
@@ -308,15 +243,10 @@ function popSign(isLogin){
 
    }
 
-   if(isLogin) {
 
     G("sign_div").innerHTML = sign_in_flow;
 
-   } else {
-
-    G("sign_div").innerHTML = change_pwd_flow;
-
-   }
+   
 
   
 
@@ -331,73 +261,10 @@ function popSignFlow(isLogin) {
    document.body.style.overflow = "hidden";
 
      
-
-      if(isLogin) {
-
-       G("sign_email").focus();
-
-      } else {
-
-       G("old_pwd").focus();
-
-      }
+      
 
 }
 
-function changePwd(){
 
-    var error = checkOldPwd();
 
-    if (error == ''){
 
-     error = checkPwd();
-
-    }
-
-   if (error == ''){
-
-    error = checkRePwd();
-
-   }
-
-    var oldPwd = G("old_pwd").value.trim();
-
-    var newPwd = G("sign_pwd").value.trim();
-
-   if (error == '') {
-
-     var url = basePath + "?q=tripuser/tripuser_change_pwd_ajax/" + oldPwd + "/" + newPwd;
-
-     exeRequest(url, getSignText, null);
-
-    } else {
-
-    G("sign_div").innerHTML = error + change_pwd_flow;
-
-    }
-
-};
-
-function checkOldPwd(){
-
-   if(G("old_pwd").value.trim() == ''){
-
-    return '<div style="color:#FF0000";">Old Password field is required.</div>';
-
-   }
-
-   return '';
-
-}
-
-var change_pwd_flow = '<div style="background:#33FFFF;">Change Your Password</div><div>old password:*</div><div>'
-
-       + '<input type="password" id="old_pwd" size="30"/>'
-
-       + '</div><div>new password:*</div><div><input type="password" id="sign_pwd" size="30"/>'
-
-        + '</div><div>new password again:*</div><div><input type="password" id="sign_repwd" size="30"/>'
-
-        + '</div><div><input type="button" value="change password" onclick="changePwd();" id="sign_button"/> '
-
-        + ' <input type="button" value="cancel" onclick="cancelSign();"/></div>';

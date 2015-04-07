@@ -15,11 +15,23 @@ from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.contrib.auth.tokens import default_token_generator
+from django.db.models import Count
+from competitors.s3 import s3_upload, s3_delete, s3_get
+import base64
+from base64 import b64decode
+from django.core.files.base import ContentFile
+import os
+from django.conf import settings
 
 # Create your views here.
 
 def home(request):
-	context = []
+	context = {}
+	teams = Team.objects.annotate(num=(Count('followers'))).order_by('-num')[:10]
+	context['teams'] = teams
+	players = Player.objects.annotate(num=(Count('followers'))).order_by('-num')[:10]
+	context['players'] = players
+	context['homepage'] = True
 	return render(request,'competitors/index.html',context)
 
 def loginself(request):
@@ -96,8 +108,6 @@ def register(request):
     new_user = authenticate(username = request.POST['username'], \
                           password = request.POST['password1'])
 
-    # follow = Follow(hostuser = request.POST['username'])
-    # follow.save()
 
     token = default_token_generator.make_token(new_user)
 
@@ -217,7 +227,12 @@ def change_password_done(request):
 
 
 def team_page(request,id):
-	context = []
+	context = {}
+	print request.GET
+	if 'cid' in request.GET and request.GET['cid']:
+		cid = request.GET['cid']
+		context['cid']=cid
+		print cid
 	team = []
 	errors = []
 	matches = []
@@ -231,14 +246,27 @@ def team_page(request,id):
 	form = PostForm()
 	news = News.objects.filter(team__id=id)
 	posts = Post.objects.filter(team__id=id).order_by("-time")
-	context = {'team':team,'form':form,'matches':matches,'news':news,'posts':posts}
+	try:
+		follow = Follow.objects.get(user__user__username=request.user.username,team__id=team.id)
+		context['follow'] = follow
+	except ObjectDoesNotExist:
+		context['not_follow'] = "not_follow"
+	context['team'] = team
+	context['form'] = form
+	context['matches'] = matches
+	context['news'] = news
+	context['posts'] = posts
 	return render(request,'competitors/team.html',context)
 
 def player_page(request,id):
-	context = []
+	context = {}
+	if 'cid' in request.GET and request.GET['cid']:
+		cid = request.GET['cid']
+		context['cid']=cid	
 	player = []
 	errors = []
 	posts = []
+	# matches = []
 	try:
 		player = Player.objects.get(id=id)
 	except ObjectDoesNotExist:
@@ -246,14 +274,44 @@ def player_page(request,id):
 	form = PostForm()
 	news = News.objects.filter(player__id=id)
 	posts = Post.objects.filter(player__id=id).order_by("-time")
-	
+	try:
+		follow = Follow.objects.get(user__user__username=request.user.username,player__id=player.id)
+		context['follow'] = follow
+	except ObjectDoesNotExist:
+		context['not_follow'] = "not_follow"
+	context['player'] = player
+	context['form'] = form
+	# context['matches'] = matches
+	context['news'] = news
+	context['posts'] = posts
 
-	context = {'player':player,'form':form,'posts':posts}
 	return render(request,'competitors/player.html',context)
 
+def search_page(request):
+	context = {}
+	if 'cid' in request.GET and request.GET['cid']:
+		context['cid'] = request.GET['cid']
+	else:
+		context['cid'] = 0
+	if 'cat' in request.GET and request.GET['cat']:
+		context['cat'] = request.GET['cat']
+	if 'country' in request.GET and request.GET['country']:
+		context['country'] = request.GET['country']
+	if 'league' in request.GET and request.GET['league']:
+		context['league'] = request.GET['league']
+	if 'team' in request.GET and request.GET['team']:
+		context['team'] = request.GET['team']
+	if 'nation' in request.GET and request.GET['nation']:
+		context['nation'] = request.GET['nation']
+
+
+	return render(request,'competitors/search.html',context)
+
 def get_country_list(request):
-	
-	countries = Country.objects.all();
+	countries = Country.objects.all()
+	if 'data' in request.POST and request.POST['data']:
+		cat = request.POST['data']
+		countries = Country.objects.filter(sports__name=cat);
 	response_text = serializers.serialize('json',countries)
 	return HttpResponse(response_text,content_type='application/json')
 
@@ -264,23 +322,108 @@ def get_league_list(request):
 		cat = request.POST['data']
 	if 'country' in request.POST and request.POST['country']:
 		country = request.POST['country']
-	leagues = League.objects.filter(category__name=cat,country__id=country);
+	if country == '0':
+		leagues = League.objects.filter(category__name=cat)
+	else:
+		leagues = League.objects.filter(category__name=cat,country__id=country)
 	response_text = serializers.serialize('json',leagues)
+	return HttpResponse(response_text,content_type='application/json')
+
+def get_nation_list(request):
+	print True
+	country=[]
+	nations = []
+	teams = []
+	leagues = []
+	players = []
+	nations = Country.objects.all()
+	if 'data' in request.POST and request.POST['data']:
+		cat = request.POST['data']
+		nations = nations.filter(sports__name=cat)
+	if 'team' in request.POST and request.POST['team']:
+		teamid = request.POST['team']
+		if teamid != '0':
+			print teamid
+			try:
+				print nations
+				teams = Team.objects.get(id=teamid)
+				print nations
+				players = Player.objects.filter(team=teams)
+				nations = nations.filter(player__in=players)
+			except ObjectDoesNotExist:
+				print 'hahahahhh'
+				teams = teams
+		elif 'league' in request.POST and request.POST['league']:
+			leagueid = request.POST['league']
+			if leagueid != '0':
+				teams = Team.objects.filter(league__id=leagueid)
+				players = Player.objects.filter(team__in=teams)
+				nations = nations.filter(player__in=players)
+			elif 'country' in request.POST and request.POST['country']:
+				countryid = request.POST['country']
+				if countryid != '0':
+					leagues = League.objects.filter(country__id=countryid)
+					teams = Team.objects.filter(league__in=leagues)
+					players = Player.objects.filter(team__in=teams)
+					nations = nations.filter(player__in=players)
+		
+	print nations
+	response_text = serializers.serialize('json',nations)
 	return HttpResponse(response_text,content_type='application/json')
 
 def get_team_list(request):
 	leagueid = []
+	leagues = []
+	teams = Team.objects.all();
+	if 'data' in request.POST and request.POST['data']:
+		cat = request.POST['data']
+		teams = teams.filter(category__name=cat)
 	if 'league' in request.POST and request.POST['league']:
-		leagueid = request.POST['league'];
-	teams = Team.objects.filter(league__id=leagueid);
+		leagueid = request.POST['league']
+		if leagueid != '0':
+			teams = teams.filter(league__id=leagueid)
+		elif 'country' in request.POST and request.POST['country']:
+			countryid = request.POST['country']
+			if countryid != '0':
+				leagues = League.objects.filter(country__id=countryid)
+				teams = teams.filter(league__in=leagues)
+				print 'tttttttt'
+	print teams
+
+
 	response_text = serializers.serialize('json',teams)
 	return HttpResponse(response_text,content_type='application/json')	
 
 def get_player_list(request):
 	teamid = []
+	players = []
+	print request.POST
+	if 'data' in request.POST and request.POST['data']:
+		cat = request.POST['data']
+		players = Player.objects.filter(category__name=cat)
+
 	if 'team' in request.POST and request.POST['team']:
-		teamid = request.POST['team'];
-	players = Player.objects.filter(team__id=teamid);
+		teamid = request.POST['team']
+		if teamid != '0':
+			players = players.filter(team__id=teamid)
+		else:
+			if 'league' in request.POST and request.POST['league']:
+				leagueid = request.POST['league']
+				if leagueid != '0':
+					teams = Team.objects.filter(league__id=leagueid)
+					players = players.filter(team__in = teams)
+				else:
+					if 'country' in request.POST and request.POST['country']:
+						countryid = request.POST['country']
+						if countryid != '0':
+							leagues = League.objects.filter(country__id=countryid)
+							players = players.filter(team__league__in=leagues)
+	if 'nation' in request.POST and request.POST['nation']:
+		nationid = request.POST['nation']
+		if nationid != '0':
+			players = players.filter(nationality__id=nationid)	
+				
+	
 	response_text = serializers.serialize('json',players)
 	return HttpResponse(response_text,content_type='application/json')
 
@@ -298,9 +441,10 @@ def add_post(request):
     if not form.is_valid():
         return render(request, 'registration/register.html', context)
     else:
+    	user = UserProfile.objects.get(user=request.user)
     	new_post = Post(title = form.cleaned_data['title'], 
     					content = form.cleaned_data['content'],
-    					user=request.user)
+    					user=user)
     	new_post.save()
     	if 'cat' in request.POST and request.POST['cat']:
     		if request.POST['cat'] == 'team':
@@ -331,9 +475,10 @@ def add_comment(request,id):
         context={'errors':error}
         return render(request, 'competitors/index.html', context)
     else:
+    	user = UserProfile.objects.get(user=request.user)
         new_comment = Comment( 
     					content = form.cleaned_data['content'],
-    					user=request.user)
+    					user=user)
         new_comment.save()
         post.comments.add(new_comment)
         post.save()
@@ -343,16 +488,20 @@ def add_comment(request,id):
 def get_post(request,id):
 	context = {}
 	post = []
+	follow = []
 	form = CommentForm()
 	context['form'] = form
 	comments = Comment.objects.filter(post__id = id)
-	print comments
 	context['comments'] = comments
 	try:
 		post = Post.objects.get(id=id)
 		context['post'] = post
 	except ObjectDoesNotExist:
 		context['errors'] = "errors"
+	users = UserProfile.objects.filter(comment__in=comments)|UserProfile.objects.filter(post=post)
+	follows = Follow.objects.filter(user__in=users)
+	context['follows'] = follows
+	print follows
 	return render(request,'competitors/post.html',context)
 
 def get_news(request,id):
@@ -366,6 +515,7 @@ def get_news(request,id):
 
 def live_page(request,id):
 	context = {}
+	print id
 	try:
 		match = Match.objects.get(id=id)
 		context['match'] = match
@@ -386,7 +536,7 @@ def search(request):
 		elif number == 1:
 			if teams.count() == 1:
 				for team in teams:
-					return redirect('team/'+str(teams.id))
+					return redirect('team/'+str(team.id))
 			else:
 				for player in players:
 					return redirect('player/'+str(player.id))
@@ -418,5 +568,135 @@ def search_autocomplete(request):
 		results.append(resultlist)
 	data = json.dumps(results)
 	return HttpResponse(data, content_type='application/json')
+
+def see_profile(request, username):
+    errors = []
+    user = []
+    posts = []
+    currentUser = []
+    # Deletes item if the logged-in user has an item matching the id
+    try:
+        currentUser = UserProfile.objects.get(user__username=username)
+    except ObjectDoesNotExist:
+        errors.append('The user did not exist.')
+    try:    
+    	user = User.objects.get(username = request.user.username);
+    except ObjectDoesNotExist:
+    	user = None
+    userprofile = UserProfile.objects.get(user__username = username);
+    print 'currentUser=='+currentUser.user.username
+    form = ChangeImageForm(request.POST,request.FILES,instance=user)
+    teamfollows = Team.objects.filter(followers__user=userprofile,followers__is_active=True)
+    playerfollows = Player.objects.filter(followers__user=userprofile,followers__is_active=True)
+    print teamfollows.count()
+    print playerfollows.count()
+    context = {'user' : user, 'errors' : errors, 'posts' : posts, 'currentUser':currentUser,'userprofile':userprofile,'form':form,'teamfollows':teamfollows,'playerfollows':playerfollows}
+    return render(request, 'competitors/profile.html', context)
+
+def edit(request):
+    currentUser = UserInfo.objects.get(user__username=request.user.username)
+    try:
+        if request.method == 'GET':
+            user = UserInfo.objects.get(user__username=request.user)
+            form = EditForm(instance = user)
+            context = { 'User': user, 'form': form }
+            return render(request, 'competitors/edit.html', context)
+        user = request.user
+        form = EditForm(request.POST,instance=currentUser)
+        if not form.is_valid():
+            context = { 'user': user, 'form': form }
+            return render(request, 'competitors/edit.html', context)
+
+        form.save()
+        posts = Posts.objects.filter(user__user__username=request.user.username)
+        currentUser = UserInfo.objects.get(user=request.user.username)
+        followed = False
+        errors = {}
+        # form = EditForm(instance=user)
+        
+        context = {'user' : user, 
+                    'errors' : errors, 
+                    'posts' : posts, 
+                    'followed':followed,
+                    'currentUser':currentUser}
+        return render(request, 'competitors/profile.html', context)
+    except User.DoesNotExist:
+        context = { 'message': 'Record with id={0} does not exist'.format(id) }
+        return render(request, 'competitors/profile.html', context)
+
+@login_required
+@transaction.atomic
+def follow(request,tp,id):
+    errors = []
+    context = {}
+    user = UserProfile.objects.get(user=request.user)
+    if tp == 'team':
+    	team = Team.objects.get(id=id)
+    	try:
+    		follow = Follow.objects.get(description='team'+str(id),user=user)
+    	except ObjectDoesNotExist:
+    		follow = Follow(user=user,description='team'+str(team.id),is_active=True)
+    		follow.save()
+    	team.followers.add(follow)
+    	team.save()
+    elif tp == 'player':
+    	player = Player.objects.get(id=id)
+    	try:
+    		follow = Follow.objects.get(description='player'+str(id))
+    	except ObjectDoesNotExist:
+    		follow = Follow(user=user,description='player'+str(player.id),is_active=True)
+    		follow.save()
+    	player.followers.add(follow)
+    	player.save()
+    print "imhere"
+    return redirect('/'+tp+'/'+id)
+
+@login_required
+@transaction.atomic
+def change_img(request):
+    context = {}
+    user = UserProfile.objects.get(user__username = request.user.username) 
+    currentUser = UserProfile.objects.get(user__username=request.user.username)                     
+    form = ChangeImageForm(request.POST,request.FILES,instance=currentUser)
+    print request.POST
+    if request.POST['data']:
+    	print request.POST['data']
+    	url = s3_upload(request.POST['data'], currentUser.user.id)
+    	currentUser.picture = url
+    	currentUser.save()
+    context['form'] = ChangeImageForm()
+    context['user'] = user
+    context['currentUser'] = currentUser
+
+    return render(request, 'competitors/profile.html', context)
+
+@login_required
+@transaction.atomic
+def save_pic(request):
+	user = UserProfile.objects.get(user=request.user)
+	userAdjustedImage_decoded = {}
+	if request.is_ajax() and request.POST:
+		userAdjustedImage = request.POST.get("userAdjustedImage")
+		userAdjustedImage_decoded=base64.b64decode(userAdjustedImage)
+        #print "userAdjustedImage_decoded",userAdjustedImage_decoded
+        filename_uploadedImage = "UserAdjustedPic.png"
+        imagene = ContentFile(userAdjustedImage_decoded, 'user_'+str(user.user.id)+'.png')
+        newfile = Fileofuser(description='user_'+str(user.user.id)+'_img',fileuploaded=imagene)
+        newfile.save()
+        path = newfile.fileuploaded.path
+        path = path.split("/")[-1]
+        user.img_url="/static/competitors/img/users/"+path
+        print user.img_url
+        user.save() 
+	return redirect('home')
+
+@login_required
+@transaction.atomic
+def get_userphoto(request, username):
+    user = get_object_or_404(UserProfile, username=username)
+    if not user.picture:
+        raise Http404
+    return HttpResponse(user.picture)
+
 
 

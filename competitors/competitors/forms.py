@@ -145,24 +145,26 @@ class CommentForm(forms.ModelForm):
         return cleaned_data
         
 
-# class ChangeImageForm(forms.ModelForm):
-#     class Meta:
-#         model = UserInfo
-#         exclude = (
-#             'age',
-#             'bio',
-#             'user',
-#             'follow',
-#             'picture'
-#         )
-#     picture = forms.FileField(required=False)
+class ChangeImageForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        exclude = (
+            'age',
+            'bio',
+            'user',
+            'follow',
+            'picture',
+            'img_url',
 
-#     def clean_picture(self):
-#         picture = self.cleaned_data['picture']
-#         if not picture:
-#             return None
-#         # if image.size > MAX_UPLOAD_SIZE:
-#         #     raise forms.ValidationError('File too big (max size is {0} bytes)'.format(MAX_UPLOAD_SIZE))
-#         return picture
+        )
+    picture = forms.FileField(required=False)
+
+    def clean_picture(self):
+        picture = self.cleaned_data['picture']
+        if not picture:
+            return None
+        # if image.size > MAX_UPLOAD_SIZE:
+        #     raise forms.ValidationError('File too big (max size is {0} bytes)'.format(MAX_UPLOAD_SIZE))
+        return picture
 
 

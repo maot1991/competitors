@@ -1,4 +1,18 @@
 {% extends "competitors/base.html" %}
 {% block main %}
-	<div>{{match.home.name}}  {{match.score}}  {{match.away.name}}</div>
+	<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/match.css">
+	<div id="match_head">
+		<div>
+			<img src="{{match.home.icon_url}}">
+			<h4>{{match.home.name}}</h4>
+		</div>
+		<div>  
+			{{match.score}}
+		</div>
+		<div>
+			<img src="{{match.away.icon_url}}">
+		  	<h4>{{match.away.name}}</h4>
+		</div>
+	</div>
+	
 {% endblock %}

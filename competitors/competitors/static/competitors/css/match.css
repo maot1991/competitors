@@ -1,0 +1,10 @@
+#match_head{
+	width: 100%;
+	text-align: center;
+	margin-top: 30px;
+}
+#match_head>div{
+	display: inline-block;
+	vertical-align: top;
+}
+

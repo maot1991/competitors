@@ -1,13 +1,11 @@
 {% extends "competitors/base.html" %}
 {% block main %}
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/team.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/tpbase.css">
 <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src="//code.jquery.com/jquery-1.10.2.js"></script>
 <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
-	<div id = "title">
-		<h1>COMPETITORS</h1>
-	</div>
-
+	<input id="cid" type="hidden" value="{{cid}}">
+	<div id="main">
 	{% block tp %}
 	{% endblock%}
 
@@ -36,9 +34,21 @@
 	  	</div>
 	  	<div id="schedule">
 	  		{% for match in matches %}
-	  			{{match.home}} vs {{match.away}}
-	  			{{match.time}}
-	  			<a href="{% url 'live_page' match.id %}">Watch LIVE</button>
+	  			<div class="panel">
+	  				<div>
+	  					<img id="match_img" src="{{STATIC_URL}}/competitors/img/team/{{match.home.id}}.png">
+	  					<h5>{{match.home}}</h5>
+	  				</div> 
+	  				<div>
+	  					<p>vs</p>
+	  					<p>{{match.time}}</p>
+	  					<a href="{% url 'live_page' match.id %}">Watch LIVE</a>
+	  				</div> 
+	  				<div>
+	  					<img id="match_img" src="{{STATIC_URL}}/competitors/img/team/{{match.away.id}}.png">
+	  					<h5>{{match.away}}<h5>
+	  				</div>
+	  			</div>
 	  		{% endfor %}
 	  	</div>
 	  	<div id="forum">
@@ -57,13 +67,14 @@
 				{% endif %}
 				{{form}}
 				{% csrf_token %}
-				<button type="submit">POST</button>
+				<button type="submit" class="btn btn-success">POST</button>
 			</form>
 	  	</div>
 	</div>
+</div>
 	
 	<script>
 		$( "#tabs" ).tabs();
 	</script>
-	<script type="text/javascript" src="{{STATIC_URL}}competitors/js/team.js"></script>
+	<script type="text/javascript" src="{{STATIC_URL}}competitors/js/tpbase.js"></script>
 	{% endblock %}

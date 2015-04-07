@@ -1,34 +1,58 @@
 {% extends "competitors/base.html" %}
 {% block main %}
-<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/team.css">
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/post.css">
 <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src="//code.jquery.com/jquery-1.10.2.js"></script>
 <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
-	<div id = "title">
-		<h1>COMPETITORS</h1>
+
+	<div class="panel">
+		<h3>{{post.title}}</h3>
 	</div>
 	<div>
-		{{post.title}}
-		{{post.content}}
-	</div>
-	<div>
+		<div class="panel pc_area">
+			<div class="pc_info">
+				<img src="user.picture">
+				<p>{{post.user.user.username}}</p>
+				{% for follow in follows %}
+					{% if follow.user == post.user %}
+						<button>{{follow.credits}}</button>
+					{% endif %}
+				{% endfor %}
+				<p>{{post.time}}</p>
+				</div>
+				<div class="pc_content">
+					<p>{{post.content}}</p>
+				</div>
+			</div>
+		</div>
 		{% for comment in comments %}
-			<div>
-				{{comment.content}} {{comment.time}}
+			<div class="panel pc_area">
+				<div class="pc_info">
+					<img src="user.picture">
+					<p>{{comment.user.user.username}}</p>
+					<button>level</button>
+					<p>{{comment.time}}</p>
+				</div>
+				<div class="pc_content">
+					{{comment.content}}
+				</div>
 			</div>
 		{% endfor %}
-		<form method="POST" action="{% url 'add_comment' post.id %}">
-			{{form}}
-			<input type="hidden" name="redirecturl" value="{% firstof request.path '/' %}">
-			{% csrf_token %}
-			<button type="submit">POST</button>
-		</form>
+		<div id="comment_form">
+			<form method="POST" action="{% url 'add_comment' post.id %}">
+				{{form}}
+				<input type="hidden" name="redirecturl" value="{% firstof request.path '/' %}">
+				{% csrf_token %}
+				<button class="btn btn-success btn-lg" type="submit">POST</button>
+			</form>
+		</div>
 
 	</div>
+
 	<script>
 	$( "#tabs" ).tabs();
 	</script>
 
 	
-<script type="text/javascript" src="{{STATIC_URL}}competitors/js/team.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}competitors/js/post.js"></script>
 {% endblock %}

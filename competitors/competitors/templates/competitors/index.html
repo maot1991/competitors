@@ -1,77 +1,55 @@
 {% extends "competitors/base.html" %}
 {% block main %}
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}competitors/css/index.css">
-<!--link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all" /-->
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.8.18/themes/base/jquery-ui.css" type="text/css" media="all">
 <script src="//code.jquery.com/jquery-1.10.2.js"></script>
 <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}competitors/js/index.js"></script>
 
-	<div id = "title">
+	<div id = "head">
 		<h1>COMPETITORS</h1>
 	</div>
 	{{errors}}
-	<div style="height:300px">
-
-		<form class="ui-widget" method="POST" action="{% url 'search' %}">
-  			<label>Search: </label>
-  			<input type="text" id="search" name="search" required="required">
-  			<button type="submit">Find</button>
+	<div id="search_bar">
+		<form class="form-inline" method="POST" action="{% url 'search' %}">
+  			<div class="form-group">
+  				<label class="sr-only" for="search">Search: </label>
+  				<input type="text" class="form-control input-lg" id="search" name="search" required="required" placeholder="Search Your Favorite">
+  			</div>
+  			<button type="submit" class="btn btn-success btn-lg">Find</button>
   			{% csrf_token %}
 		</form>
+		
 	</div>
-	<div id="category">
-		<div id="category_sub">
-			<div class="category_icon">
-				<img src="">
-				<button onclick="createSub_all('country',this.value)" value="Soccer">Soccer</button>
-			</div>
-			<div class="category_icon">
-				<img src="">
-				<button onclick="createSub_all('country',this.value)" value="Basketball">Baseketball</button>
-			</div>
-			<div class="category_icon">
-				<img src="">
-				<button onclick="createSub_all('country',this.value)" value="Baseball">Baseball</button>
-			</div>
-			<div class="category_icon">
-				<img src="">
-				<button onclick="createSub_all('country',this.value)" value="American Football">American Football</button>
-			</div>
-			<div class="category_icon">
-				<img src="">
-				<button onclick="createSub_all('country',this.value)" value="Holley Ball">Holley Ball</button>
-			</div>
-		</div>
-	</div>
-	<div id="search_area">
-		<div id="search_area_country">
-			<select id="search_area_country_scroll" onchange="change_link('country')">
-			</select>
-			<!-- <button id="country_button" onclick="create_sub_league()">Go For League</button> -->
-			<button id="country_button" onclick="createSub_all('league')">Go For League</button>
-		</div>
-		<div id="search_area_league">
-			<select id="search_area_league_scroll" onchange="change_link('league')">
-			</select>
-			<!-- <button onclick="create_sub_team()">Go For Team</button> -->
-			<button id="league_button" onclick="createSub_all('team')">Go For Team</button>
-		</div>
-		<div id="search_area_team">
-			<select id="search_area_team_scroll" onchange="change_link('team')">
-			</select>
-			<!-- <button onclick="create_sub_player()">Go For Player</button> -->
-			<button id="team_button" onclick="createSub_all('player')">Go For Player</button>
-		</div>
-		<div id="search_area_player">
-			<select id="search_area_player_scroll" onchange="change_link('player')">
-			</select>
-		</div>
-		{% csrf_token %}
-	</div>
-	<div>
-		<a id="team_link" class="pagelink" href="#">See Team</a>
-		<a id="player_link" class="pagelink" href="#">See Player</a>
+	
 
+	<div id="recommend_team">
+		{% for team in teams %}
+			<div class="recommend_team_each">
+				<a href="{% url 'team_page' team.id %}">
+					<img src="{{STATIC_URL}}/competitors/img/team/{{team.id}}.png">
+					<h6>{{team.name}}</h6>
+				</a>
+			</div>
+		{% endfor %}
+	</div>
+
+	<div id="recommend_player">
+		{% for player in players %}
+			<div class="recommend_player_each">
+				<a href="{% url 'player_page' player.id %}">
+					<div class="panel">
+						<div class="recommend_player_each_img">
+							<img src="{{player.icon_url}}">
+						</div>
+						<div class="recommend_player_each_info">
+							<h6>{{player.name}}</h6>
+							<h6>{{player.followers.count}}
+						</div>
+					</div>
+				</a>
+			</div>	
+		{% endfor %}
 	</div>
 
 
